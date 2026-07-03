@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delphis Venture Investment Dashboard — Vanguard XXXX6729</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --green:#16a34a; --red:#dc2626; --blue:#2563eb; --gold:#d97706;
+    --bg:#0f172a; --card:#1e293b; --card2:#263348; --border:#334155;
+    --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  .header{background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 60%);border-bottom:1px solid var(--border);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .header h1{font-size:1.35rem;font-weight:700;color:var(--accent);}
+  .header p{color:var(--muted);font-size:0.82rem;margin-top:3px;}
+  .hval{font-size:1.9rem;font-weight:800;color:#fff;}
+  .hchg{color:#4ade80;font-size:0.9rem;font-weight:600;margin-top:2px;}
+  .has{color:var(--muted);font-size:0.75rem;}
+
+  .nav{background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:2px;overflow-x:auto;}
+  .nav button{background:none;border:none;color:var(--muted);padding:12px 16px;cursor:pointer;font-size:0.84rem;font-weight:500;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s;}
+  .nav button:hover{color:var(--text);}
+  .nav button.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  .main{padding:20px 28px;max-width:1500px;margin:0 auto;}
+  .page{display:none;}
+  .page.active{display:block;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  @media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr;}.main{padding:14px;}}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;}
+  .card h3{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px;}
+  .card .big{font-size:1.7rem;font-weight:700;color:#fff;}
+  .card .sub{font-size:0.8rem;color:var(--muted);margin-top:3px;}
+  .card.gb{border-left:3px solid var(--green);}
+  .card.rb{border-left:3px solid var(--red);}
+  .card.bb{border-left:3px solid var(--blue);}
+  .card.ab{border-left:3px solid var(--gold);}
+  .ctitle{font-size:0.9rem;font-weight:600;color:var(--text);margin-bottom:12px;}
+  .mb{margin-bottom:18px;}
+
+  .tw{overflow-x:auto;border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:0.8rem;}
+  thead tr{background:var(--card2);}
+  th{padding:8px 12px;text-align:left;color:var(--muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;cursor:pointer;user-select:none;}
+  th:hover{color:var(--accent);}
+  td{padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--card2);}
+
+  .badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:0.72rem;font-weight:600;}
+  .bg{background:rgba(22,163,74,0.15);color:#4ade80;}
+  .br{background:rgba(220,38,38,0.15);color:#f87171;}
+  .bgy{background:rgba(148,163,184,0.1);color:var(--muted);}
+  .bb2{background:rgba(56,189,248,0.1);color:var(--accent);}
+  .bgold{background:rgba(217,119,6,0.15);color:#fbbf24;}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .fpill{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:5px 14px;font-size:0.78rem;cursor:pointer;transition:all 0.2s;}
+  .fpill.active,.fpill:hover{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
+
+  .wg{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .wc{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;}
+  .wc.win{border-top:3px solid var(--green);}
+  .wc.los{border-top:3px solid var(--red);}
+  .wc h4{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:10px;}
+  .wi{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);}
+  .wi:last-child{border-bottom:none;}
+  .wi .tk{font-weight:700;font-size:0.9rem;}
+  .wi .nm{font-size:0.72rem;color:var(--muted);}
+  .wi .pct{font-weight:700;font-size:0.95rem;}
+  .up{color:#4ade80;}
+  .dn{color:#f87171;}
+
+  .tl{padding-left:12px;}
+  .tli{display:flex;gap:14px;padding:10px 0;border-left:2px solid var(--border);margin-left:6px;padding-left:20px;position:relative;}
+  .tli::before{content:'';position:absolute;left:-5px;top:16px;width:8px;height:8px;border-radius:50%;background:var(--accent);}
+  .tli.buy::before{background:var(--green);}
+  .tli.sell::before{background:var(--red);}
+  .tli.ev::before{background:var(--gold);}
+  .tlm{font-size:0.72rem;font-weight:700;color:var(--accent);min-width:32px;margin-top:2px;}
+  .tlt{font-weight:600;font-size:0.86rem;}
+  .tld{font-size:0.76rem;color:var(--muted);margin-top:2px;}
+
+  .dr{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.84rem;}
+  .dr:last-child{border-bottom:none;}
+  .dr .tk{font-weight:600;}
+  .dr .am{color:#4ade80;font-weight:600;}
+
+  footer{text-align:center;padding:24px;color:var(--muted);font-size:0.72rem;border-top:1px solid var(--border);margin-top:32px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📈 Delphis Venture Investment Dashboard</h1>
+    <p>Vanguard Joint Brokerage · Account XXXX6729 · 45 Stocks · 13 ETFs · 1 Fund · 4 CDs</p>
+  </div>
+  <div style="text-align:right">
+    <div class="hval">$166,817.03</div>
+    <div class="hchg">▲ +$18,347.50 &nbsp;|&nbsp; +12.36% since Dec 2025</div>
+    <div class="has">As of May 31, 2026 &nbsp;·&nbsp; Unrealized Gain: $73,599.89</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="active" onclick="showPage('overview',this)">📊 Overview</button>
+  <button onclick="showPage('holdings',this)">📋 All Holdings</button>
+  <button onclick="showPage('performance',this)">🏆 Winners & Losers</button>
+  <button onclick="showPage('topheld',this)">💼 Top Positions</button>
+  <button onclick="showPage('income',this)">💰 Income</button>
+  <button onclick="showPage('events',this)">📅 Events</button>
+</nav>
+
+<div class="main">
+
+<!-- OVERVIEW -->
+<div id="page-overview" class="page active">
+  <div class="g4 mb">
+    <div class="card gb"><h3>Portfolio Value (May)</h3><div class="big">$166,817</div><div class="sub">+$18,347 since Dec 2025</div></div>
+    <div class="card gb"><h3>YTD Return</h3><div class="big" style="color:#4ade80">+12.36%</div><div class="sub">From $148,469 baseline</div></div>
+    <div class="card ab"><h3>YTD Income</h3><div class="big" style="color:#fbbf24">$932.73</div><div class="sub">Dividends + Interest</div></div>
+    <div class="card bb"><h3>Unrealized Gain</h3><div class="big" style="color:#60a5fa">$73,600</div><div class="sub">Embedded profit (cost basis)</div></div>
+  </div>
+  <div class="g2 mb">
+    <div class="card"><div class="ctitle">Portfolio Value — Monthly</div><canvas id="c1" style="max-height:260px"></canvas></div>
+    <div class="card"><div class="ctitle">Monthly Gain / Loss ($)</div><canvas id="c2" style="max-height:260px"></canvas></div>
+  </div>
+  <div class="g2 mb">
+    <div class="card"><div class="ctitle">Asset Mix — May 2026</div><div style="max-width:280px;margin:auto"><canvas id="c3" style="max-height:240px"></canvas></div></div>
+    <div class="card"><div class="ctitle">Asset Mix Trend — % Stocks vs Bonds vs Cash</div><canvas id="c4" style="max-height:240px"></canvas></div>
+  </div>
+</div>
+
+<!-- HOLDINGS -->
+<div id="page-holdings" class="page">
+  <div class="filters" id="typeFilters">
+    <div class="fpill active" onclick="filterType('All',this)">All (64)</div>
+    <div class="fpill" onclick="filterType('Stock',this)">Stocks (45)</div>
+    <div class="fpill" onclick="filterType('ETF',this)">ETFs (13)</div>
+    <div class="fpill" onclick="filterType('Mutual Fund',this)">Mutual Fund (1)</div>
+    <div class="fpill" onclick="filterType('CD',this)">CDs (4)</div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tw">
+      <table id="htable">
+        <thead><tr>
+          <th onclick="sortH(0)">Ticker ↕</th>
+          <th onclick="sortH(1)">Name ↕</th>
+          <th onclick="sortH(2)">Type ↕</th>
+          <th onclick="sortH(3)">Shares ↕</th>
+          <th onclick="sortH(4)">Jan Price ↕</th>
+          <th onclick="sortH(5)">May Price ↕</th>
+          <th onclick="sortH(6)">Jan→May % ↕</th>
+          <th onclick="sortH(7)">May Value ↕</th>
+          <th onclick="sortH(8)">Unreal. G/L ↕</th>
+        </tr></thead>
+        <tbody id="htbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- WINNERS & LOSERS -->
+<div id="page-performance" class="page">
+  <div class="wg mb">
+    <div class="wc win"><h4>🏆 Top Winners (Jan→May Price %)</h4><div id="wlist"></div></div>
+    <div class="wc los"><h4>📉 Laggards</h4><div id="llist"></div></div>
+  </div>
+  <div class="card">
+    <div class="ctitle">All Holdings — Jan→May Price Change</div>
+    <div style="height:500px"><canvas id="c5"></canvas></div>
+  </div>
+</div>
+
+<!-- TOP POSITIONS -->
+<div id="page-topheld" class="page">
+  <div class="g2 mb">
+    <div class="card">
+      <div class="ctitle">Top 15 Holdings by May Value</div>
+      <div style="max-height:320px"><canvas id="c6"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Top 15 by Unrealized Gain ($)</div>
+      <div style="max-height:320px"><canvas id="c7"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ctitle">Top Holdings Detail</div>
+    <div class="tw"><table id="toptable">
+      <thead><tr>
+        <th>Ticker</th><th>Name</th><th>May Value</th><th>% of Portfolio</th>
+        <th>Jan Value</th><th>Unrealized G/L</th><th>% Return (cost basis)</th>
+      </tr></thead>
+      <tbody id="toptbody"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- INCOME -->
+<div id="page-income" class="page">
+  <div class="g2 mb">
+    <div class="card gb"><h3>YTD Total Income</h3><div class="big" style="color:#4ade80">$932.73</div><div class="sub">$867.59 dividends + $65.14 interest</div></div>
+    <div class="card ab"><h3>May Income</h3><div class="big" style="color:#fbbf24">$258.92</div><div class="sub">$245.76 dividends + $13.16 interest</div></div>
+  </div>
+  <div class="g2 mb">
+    <div class="card"><div class="ctitle">Monthly Dividend + Interest Income</div><canvas id="c8" style="max-height:260px"></canvas></div>
+    <div class="card"><div class="ctitle">Income by Category (YTD)</div><div style="max-width:280px;margin:auto"><canvas id="c9" style="max-height:240px"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="ctitle">Monthly Income Breakdown</div>
+    <div id="incDetail"></div>
+  </div>
+</div>
+
+<!-- EVENTS -->
+<div id="page-events" class="page">
+  <div class="g2">
+    <div class="card">
+      <div class="ctitle">📅 Timeline of Key Events</div>
+      <div class="tl" id="tlEl"></div>
+    </div>
+    <div>
+      <div class="card mb">
+        <div class="ctitle">💵 Cash Flows</div>
+        <div id="cfEl"></div>
+      </div>
+      <div class="card mb">
+        <div class="ctitle">🔄 Corporate Actions</div>
+        <div id="caEl"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle">🆕 Positions Added / Removed</div>
+        <div id="paEl"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<footer>Investment Club Dashboard · Vanguard Joint Brokerage XXXX6729 · Data from monthly statements Jan–May 2026 · For informational purposes only.</footer>
+
+<script>
+// =====================================================================
+// DATA — sourced directly from Vanguard monthly statements
+// =====================================================================
+
+const portValues = [148469.53,152535.94,151564.35,145808.33,161066.72,166817.03];
+const portLabels = ['Dec 2025','Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026'];
+const monthChanges = [null,4066.41,-971.59,-5756.02,15258.39,5750.31];
+
+// Asset mix % Stocks / Fixed Income / Cash
+const mixStocks = [89.7,90.2,91.5,92.8,94.3];
+const mixFixed  = [6.2, 5.8, 5.5, 4.7, 5.6];
+const mixCash   = [4.1, 4.0, 3.0, 2.5, 0.1];
+
+// Monthly income (dividends + interest, from statements)
+const incMonths = ['Jan','Feb','Mar','Apr','May'];
+const incAmts   = [47.32, 163.10, 248.70, 214.78, 258.92];
+// YTD = $932.73; May YTD statement: div $867.59 + interest $65.14
+
+// COMPLETE HOLDINGS
+// janPx = Jan 31 price | mayPx = May 31 price | maySh = May shares held
+// costBasis & unrealized from May statement (from original purchase, not from Jan)
+// pct = Jan→May price change (null if not held in Jan)
+const H = [
+  // MUTUAL FUNDS
+  {t:'ASGI',  n:'Abrdn Global Infrastructure Income Fund', type:'Mutual Fund',
+   janPx:null,    janSh:0,       mayPx:24.10,   maySh:121.14,
+   costBasis:2886.45, unreal:33.02},
+
+  // ETFs
+  {t:'ESGV',  n:'Vanguard ESG US Stock ETF',              type:'ETF',
+   janPx:121.62,  janSh:21.164,  mayPx:134.05,  maySh:21.219, costBasis:2072.23, unreal:772.17},
+  {t:'VCEB',  n:'Vanguard ESG US Corp Bond ETF',          type:'ETF',
+   janPx:63.785,  janSh:5.372,   mayPx:63.00,   maySh:5.454,  costBasis:340.00,  unreal:3.60},
+  {t:'VCR',   n:'Vanguard Consumer Discretionary ETF',    type:'ETF',
+   janPx:399.19,  janSh:15.127,  mayPx:401.70,  maySh:15.157, costBasis:4840.67, unreal:1247.89},
+  {t:'VCRB',  n:'Vanguard Core Bond ETF',                 type:'ETF',
+   janPx:78.1877, janSh:15.106,  mayPx:77.2794, maySh:15.323, costBasis:1156.72, unreal:27.43},
+  {t:'VDC',   n:'Vanguard Consumer Staples ETF',          type:'ETF',
+   janPx:226.93,  janSh:18.484,  mayPx:223.75,  maySh:18.584, costBasis:3944.20, unreal:213.97},
+  {t:'VDE',   n:'Vanguard Energy ETF',                    type:'ETF',
+   janPx:143.79,  janSh:15.522,  mayPx:159.10,  maySh:15.609, costBasis:1975.95, unreal:507.44},
+  {t:'VIG',   n:'Vanguard Dividend Appreciation ETF',     type:'ETF',
+   janPx:224.02,  janSh:36.591,  mayPx:234.65,  maySh:36.734, costBasis:7028.69, unreal:1590.94},
+  {t:'VOX',   n:'Vanguard Communication Services ETF',    type:'ETF',
+   janPx:199.46,  janSh:30.445,  mayPx:197.08,  maySh:30.519, costBasis:4241.81, unreal:1772.87},
+  {t:'VPLS',  n:'Vanguard Core Plus Bond ETF',            type:'ETF',
+   janPx:78.4534, janSh:10.768,  mayPx:77.65,   maySh:10.925, costBasis:835.31,  unreal:13.01},
+  {t:'VSGX',  n:'Vanguard ESG International Stock ETF',   type:'ETF',
+   janPx:75.47,   janSh:25.870,  mayPx:82.10,   maySh:26.025, costBasis:1541.79, unreal:594.86},
+  {t:'VTEC',  n:'Vanguard CA Tax Exempt Bond ETF',        type:'ETF',
+   janPx:100.96,  janSh:26.184,  mayPx:100.05,  maySh:26.453, costBasis:2647.80, unreal:-1.18},
+  {t:'VWOB',  n:'Vanguard EM Govt Bond ETF',              type:'ETF',
+   janPx:67.66,   janSh:5.509,   mayPx:67.25,   maySh:5.618,  costBasis:357.05,  unreal:20.76},
+  {t:'RYLD',  n:'Global X Russell 2000 CC ETF',           type:'ETF',
+   janPx:null,    janSh:0,       mayPx:15.76,   maySh:357.159,costBasis:5302.50, unreal:326.32},
+
+  // STOCKS — all 45 active in May 2026
+  {t:'AAPL',  n:'Apple Inc',                     type:'Stock', janPx:259.48,  janSh:110.641, mayPx:312.06,   maySh:110.846, costBasis:8864.67,  unreal:25725.93},
+  {t:'AMZN',  n:'Amazon.com Inc',                type:'Stock', janPx:239.30,  janSh:53.000,  mayPx:270.64,   maySh:53.000,  costBasis:6207.56,  unreal:8136.36},
+  {t:'COST',  n:'Costco Wholesale Corp',          type:'Stock', janPx:940.25,  janSh:14.085,  mayPx:956.32,   maySh:14.085,  costBasis:5165.47,  unreal:8304.29},
+  {t:'GOOG',  n:'Alphabet Inc (Cl C)',            type:'Stock', janPx:338.53,  janSh:25.137,  mayPx:376.43,   maySh:25.154,  costBasis:2979.42,  unreal:6489.30},
+  {t:'GOOGL', n:'Alphabet Inc (Cl A)',            type:'Stock', janPx:338.00,  janSh:18.086,  mayPx:380.34,   maySh:18.098,  costBasis:2602.59,  unreal:4280.80},
+  {t:'SBUX',  n:'Starbucks Corp',                type:'Stock', janPx:91.95,   janSh:71.363,  mayPx:99.16,    maySh:72.265,  costBasis:7623.98,  unreal:-458.20},
+  {t:'SIEGY', n:'Siemens AG ADR',                type:'Stock', janPx:151.32,  janSh:33.145,  mayPx:156.83,   maySh:33.700,  costBasis:2640.52,  unreal:2644.65},
+  {t:'VIG_S', n:'(see ETF tab — VIG)',            type:'Stock', janPx:null,    janSh:0,       mayPx:null,     maySh:0,       costBasis:0,        unreal:0}, // placeholder, remove
+  {t:'T',     n:'AT&T Inc',                      type:'Stock', janPx:26.21,   janSh:124.143, mayPx:24.80,    maySh:126.775, costBasis:2389.32,  unreal:754.70},
+  {t:'MSFT',  n:'Microsoft Corp',                type:'Stock', janPx:430.29,  janSh:6.256,   mayPx:450.24,   maySh:6.270,   costBasis:1422.60,  unreal:1400.40},
+  {t:'GS',    n:'Goldman Sachs Group Inc',        type:'Stock', janPx:935.41,  janSh:2.280,   mayPx:1025.56,  maySh:2.293,   costBasis:520.67,   unreal:1830.93},
+  {t:'CPRX',  n:'Catalyst Pharmaceuticals',      type:'Stock', janPx:24.30,   janSh:29.000,  mayPx:31.23,    maySh:29.000,  costBasis:82.89,    unreal:822.78},
+  {t:'CVX',   n:'Chevron Corp',                  type:'Stock', janPx:176.90,  janSh:8.420,   mayPx:182.46,   maySh:8.500,   costBasis:948.68,   unreal:602.23},
+  {t:'HAL',   n:'Halliburton Company',            type:'Stock', janPx:33.52,   janSh:42.979,  mayPx:38.85,    maySh:43.171,  costBasis:555.63,   unreal:1121.56},
+  {t:'OXY',   n:'Occidental Petroleum',          type:'Stock', janPx:45.39,   janSh:31.882,  mayPx:56.63,    maySh:32.031,  costBasis:595.43,   unreal:1218.48},
+  {t:'COF',   n:'Capital One Financial',          type:'Stock', janPx:218.93,  janSh:8.420,   mayPx:187.93,   maySh:8.455,   costBasis:559.97,   unreal:1028.97},
+  {t:'COP',   n:'ConocoPhillips',                type:'Stock', janPx:104.23,  janSh:5.172,   mayPx:113.98,   maySh:5.208,   costBasis:138.76,   unreal:454.84},
+  {t:'CFG',   n:'Citizens Financial Group',      type:'Stock', janPx:62.98,   janSh:12.658,  mayPx:62.26,    maySh:12.844,  costBasis:361.40,   unreal:438.26},
+  {t:'XOM',   n:'Exxon Mobil Corp',              type:'Stock', janPx:141.40,  janSh:5.171,   mayPx:145.26,   maySh:5.207,   costBasis:233.68,   unreal:522.68},
+  {t:'M',     n:'Macy\'s Inc',                   type:'Stock', janPx:20.02,   janSh:23.783,  mayPx:21.76,    maySh:24.032,  costBasis:171.09,   unreal:351.84},
+  {t:'SHEL',  n:'Shell PLC ADR',                 type:'Stock', janPx:77.03,   janSh:6.295,   mayPx:84.12,    maySh:6.345,   costBasis:203.51,   unreal:330.23},
+  {t:'C',     n:'Citigroup Inc',                 type:'Stock', janPx:115.71,  janSh:4.855,   mayPx:125.90,   maySh:4.904,   costBasis:257.42,   unreal:359.99},
+  {t:'BAC',   n:'Bank of America Corp',          type:'Stock', janPx:53.20,   janSh:11.688,  mayPx:51.60,    maySh:11.756,  costBasis:405.02,   unreal:201.58},
+  {t:'AA',    n:'Alcoa Corp',                    type:'Stock', janPx:56.81,   janSh:8.312,   mayPx:77.64,    maySh:8.326,   costBasis:93.59,    unreal:552.84},
+  {t:'APA',   n:'APA Corp',                      type:'Stock', janPx:26.41,   janSh:11.469,  mayPx:36.43,    maySh:11.644,  costBasis:155.66,   unreal:268.53},
+  {t:'DAL',   n:'Delta Airlines Inc',             type:'Stock', janPx:65.89,   janSh:3.087,   mayPx:82.48,    maySh:3.096,   costBasis:76.88,    unreal:178.47},
+  {t:'RCL',   n:'Royal Caribbean Group',          type:'Stock', janPx:324.65,  janSh:2.035,   mayPx:284.63,   maySh:2.046,   costBasis:93.49,    unreal:488.86},
+  {t:'PLTR',  n:'Palantir Technologies',          type:'Stock', janPx:146.59,  janSh:1.000,   mayPx:156.54,   maySh:1.000,   costBasis:27.04,    unreal:129.50},
+  {t:'OXYWS', n:'Occidental Pete Warrants 8/27',  type:'Stock', janPx:23.53,   janSh:3.000,   mayPx:34.60,    maySh:3.000,   costBasis:14.85,    unreal:88.95},
+  {t:'EOSE',  n:'Eos Energy Enterprises',         type:'Stock', janPx:14.64,   janSh:74.000,  mayPx:8.43,     maySh:74.000,  costBasis:1745.23,  unreal:-1121.41},
+  {t:'NIO',   n:'NIO Inc ADS',                   type:'Stock', janPx:4.70,    janSh:5.000,   mayPx:5.60,     maySh:5.000,   costBasis:174.45,   unreal:-146.45},
+  {t:'PFE',   n:'Pfizer Inc',                    type:'Stock', janPx:26.44,   janSh:12.755,  mayPx:26.18,    maySh:12.962,  costBasis:507.82,   unreal:-168.48},
+  {t:'KSS',   n:'Kohl\'s Corp',                  type:'Stock', janPx:17.47,   janSh:13.517,  mayPx:14.36,    maySh:13.647,  costBasis:245.44,   unreal:-49.47},
+  {t:'NCLH',  n:'Norwegian Cruise Line Holdings', type:'Stock', janPx:21.96,   janSh:6.000,   mayPx:18.34,    maySh:6.000,   costBasis:66.93,    unreal:43.11},
+  {t:'CCL',   n:'Carnival Corp',                 type:'Stock', janPx:30.02,   janSh:3.000,   mayPx:28.06,    maySh:3.030,   costBasis:42.35,    unreal:42.66},
+  {t:'CPRI',  n:'Capri Holdings Ltd',             type:'Stock', janPx:22.57,   janSh:10.000,  mayPx:18.51,    maySh:10.000,  costBasis:126.85,   unreal:58.25},
+  {t:'CRM',   n:'Salesforce Inc',                type:'Stock', janPx:212.29,  janSh:2.024,   mayPx:191.10,   maySh:2.029,   costBasis:449.85,   unreal:-62.11},
+  {t:'RCUS',  n:'Arcus Biosciences Inc',          type:'Stock', janPx:21.04,   janSh:5.000,   mayPx:25.34,    maySh:5.000,   costBasis:50.55,    unreal:76.15},
+  {t:'AAL',   n:'American Airlines Group',        type:'Stock', janPx:13.30,   janSh:5.000,   mayPx:14.64,    maySh:5.000,   costBasis:53.10,    unreal:20.10},
+  {t:'SCHW',  n:'Charles Schwab Corp',            type:'Stock', janPx:103.92,  janSh:1.084,   mayPx:87.35,    maySh:1.092,   costBasis:62.11,    unreal:33.27},
+  {t:'SRTA',  n:'Strata Critical Medical',        type:'Stock', janPx:4.88,    janSh:20.000,  mayPx:6.31,     maySh:20.000,  costBasis:209.40,   unreal:-83.20},
+  {t:'AGEN',  n:'Agenus Inc',                    type:'Stock', janPx:2.84,    janSh:4.000,   mayPx:3.50,     maySh:4.000,   costBasis:257.89,   unreal:-243.89},
+  {t:'ACH',   n:'Accendra Health Inc',            type:'Stock', janPx:2.21,    janSh:2.000,   mayPx:2.84,     maySh:2.000,   costBasis:63.66,    unreal:-57.98},
+  {t:'TRU',   n:'TransUnion',                    type:'Stock', janPx:79.02,   janSh:2.065,   mayPx:71.56,    maySh:2.069,   costBasis:182.13,   unreal:-34.08},
+  {t:'VWAGY', n:'Volkswagen AG ADR',              type:'Stock', janPx:12.09,   janSh:2.000,   mayPx:10.88,    maySh:2.000,   costBasis:37.34,    unreal:-15.58},
+  {t:'WBD',   n:'Warner Bros Discovery',          type:'Stock', janPx:27.54,   janSh:7.000,   mayPx:27.01,    maySh:7.000,   costBasis:248.87,   unreal:-59.80},
+
+  // CDs (Fixed Income) — price per share = $1.00; share count = dollar value
+  {t:'CD-FBL', n:'First Bank of the Lake 4.05% CD due 12/31/29', type:'CD',
+   janPx:1.00, janSh:1015.44, mayPx:1.00, maySh:999.79, costBasis:1000.00, unreal:-0.21},
+  {t:'CD-FNB', n:'First Natl Bank of Amer 3.85% CD due 12/31/29', type:'CD',
+   janPx:1.00, janSh:1008.14, mayPx:1.00, maySh:993.12, costBasis:1000.00, unreal:-6.88},
+  {t:'CD-UBS', n:'UBS Bank USA 3.90% CD due 01/08/30',            type:'CD',
+   janPx:1.00, janSh:1009.98, mayPx:1.00, maySh:994.65, costBasis:1000.00, unreal:-5.35},
+  {t:'CD-APX', n:'Apex Bank 3.95% CD due 12/29/34',               type:'CD',
+   janPx:1.00, janSh:1012.22, mayPx:1.00, maySh:988.39, costBasis:1000.00, unreal:-11.61},
+].filter(h => h.t !== 'VIG_S'); // remove placeholder
+
+// Helper: May value
+function mayVal(h){ return h.mayPx ? h.mayPx * h.maySh : 0; }
+// Helper: Jan→May price % change
+function priceChg(h){
+  if(!h.janPx || !h.mayPx) return null;
+  return (h.mayPx - h.janPx) / h.janPx * 100;
+}
+// Helper: return on cost
+function retCost(h){
+  if(!h.costBasis || h.costBasis === 0) return null;
+  return h.unreal / h.costBasis * 100;
+}
+
+const fmt = n => '$' + (n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtK = n => '$' + (n/1000).toFixed(1) + 'K';
+const fmtPct = n => (n>=0?'+':'')+n.toFixed(1)+'%';
+
+// =====================================================================
+// CHART HELPERS
+// =====================================================================
+const CD = { plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},
+  scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(51,65,85,0.5)'}},
+          y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(51,65,85,0.5)'}}} };
+
+// =====================================================================
+// OVERVIEW CHARTS
+// =====================================================================
+new Chart(document.getElementById('c1'),{type:'line',
+  data:{labels:portLabels,datasets:[{label:'Portfolio Value',data:portValues,
+    borderColor:'#38bdf8',backgroundColor:'rgba(56,189,248,0.1)',fill:true,tension:0.35,pointRadius:5,pointBackgroundColor:'#38bdf8'}]},
+  options:{...CD,plugins:{...CD.plugins,tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},
+    scales:{x:CD.scales.x,y:{...CD.scales.y,ticks:{color:'#94a3b8',callback:v=>fmtK(v)}}}}});
+
+new Chart(document.getElementById('c2'),{type:'bar',
+  data:{labels:['Jan','Feb','Mar','Apr','May'],datasets:[{label:'Monthly Change',
+    data:[4066.41,-971.59,-5756.02,15258.39,5750.31],
+    backgroundColor:[4066,-971,-5756,15258,5750].map(v=>v>=0?'rgba(74,222,128,0.75)':'rgba(248,113,113,0.75)'),
+    borderColor:[4066,-971,-5756,15258,5750].map(v=>v>=0?'#16a34a':'#dc2626'),
+    borderWidth:1.5,borderRadius:5}]},
+  options:{...CD,plugins:{...CD.plugins,tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},
+    scales:{x:CD.scales.x,y:{...CD.scales.y,ticks:{color:'#94a3b8',callback:v=>fmtK(v)}}}}});
+
+new Chart(document.getElementById('c3'),{type:'doughnut',
+  data:{labels:['Stocks & ETFs (94.3%)','Fixed Income (5.6%)','Cash (0.1%)'],
+    datasets:[{data:[94.3,5.6,0.1],backgroundColor:['#3b82f6','#f59e0b','#64748b'],borderColor:'#1e293b',borderWidth:3}]},
+  options:{plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',padding:14}}},cutout:'62%'}});
+
+new Chart(document.getElementById('c4'),{type:'line',
+  data:{labels:['Jan','Feb','Mar','Apr','May'],datasets:[
+    {label:'Stocks & ETFs',data:mixStocks,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:0.4,pointRadius:4},
+    {label:'Fixed Income', data:mixFixed, borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.1)',fill:true,tension:0.4,pointRadius:4},
+    {label:'Cash/Sweep',   data:mixCash,  borderColor:'#64748b',backgroundColor:'rgba(100,116,139,0.1)',fill:true,tension:0.4,pointRadius:4}]},
+  options:{...CD,scales:{x:CD.scales.x,y:{...CD.scales.y,ticks:{color:'#94a3b8',callback:v=>v+'%'},max:100}}}});
+
+// =====================================================================
+// HOLDINGS TABLE
+// =====================================================================
+let currentType = 'All';
+let sortDirH = {};
+
+function buildHoldingsTable(filter){
+  const tbody = document.getElementById('htbody');
+  tbody.innerHTML = '';
+  const rows = H.filter(h => filter === 'All' || h.type === filter);
+  rows.forEach(h => {
+    const mv = mayVal(h);
+    const pc = priceChg(h);
+    const tr = document.createElement('tr');
+    const typeBadge = {
+      'Stock':'bgy','ETF':'bb2','Mutual Fund':'bgold','CD':'badge bgy'
+    }[h.type] || 'bgy';
+    tr.innerHTML = `
+      <td><strong style="color:#38bdf8">${h.t}</strong></td>
+      <td style="color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis">${h.n}</td>
+      <td><span class="badge ${typeBadge}">${h.type}</span></td>
+      <td>${h.maySh > 0 ? h.maySh.toLocaleString('en-US',{maximumFractionDigits:4}) : '—'}</td>
+      <td>${h.janPx ? '$'+h.janPx.toFixed(2) : '<span style="color:var(--muted)">New</span>'}</td>
+      <td>${h.mayPx ? '$'+h.mayPx.toFixed(2) : '—'}</td>
+      <td>${pc !== null ? `<span class="badge ${pc>=0?'bg':'br'}">${fmtPct(pc)}</span>` : '<span class="badge bgy">New</span>'}</td>
+      <td><strong>${fmt(mv)}</strong></td>
+      <td><span style="color:${h.unreal>=0?'#4ade80':'#f87171'};font-weight:600">${h.unreal>=0?'+':''}${fmt(h.unreal)}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterType(t, el){
+  currentType = t;
+  document.querySelectorAll('.fpill').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  buildHoldingsTable(t);
+}
+
+function sortH(col){
+  const tbody = document.getElementById('htbody');
+  const rows = Array.from(tbody.rows);
+  sortDirH[col] = !sortDirH[col];
+  rows.sort((a,b)=>{
+    let av = a.cells[col].innerText.replace(/[$,%+]/g,'').trim();
+    let bv = b.cells[col].innerText.replace(/[$,%+]/g,'').trim();
+    const an = parseFloat(av), bn = parseFloat(bv);
+    if(!isNaN(an)&&!isNaN(bn)) return sortDirH[col]?an-bn:bn-an;
+    return sortDirH[col]?av.localeCompare(bv):bv.localeCompare(av);
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+// =====================================================================
+// WINNERS & LOSERS
+// =====================================================================
+function buildPerformance(){
+  // Only holdings that were in Jan (have janPx)
+  const scored = H.filter(h => h.janPx && h.mayPx)
+    .map(h => ({...h, pc: priceChg(h)}))
+    .sort((a,b) => b.pc - a.pc);
+
+  const winners = scored.filter(h => h.pc > 0).slice(0,12);
+  const losers  = scored.filter(h => h.pc < 0).slice(-10).reverse();
+
+  document.getElementById('wlist').innerHTML = winners.map(h=>`
+    <div class="wi">
+      <div><div class="tk">${h.t}</div><div class="nm">${h.n}</div></div>
+      <div class="pct up">${fmtPct(h.pc)}</div>
+    </div>`).join('');
+
+  document.getElementById('llist').innerHTML = losers.map(h=>`
+    <div class="wi">
+      <div><div class="tk">${h.t}</div><div class="nm">${h.n}</div></div>
+      <div class="pct dn">${fmtPct(h.pc)}</div>
+    </div>`).join('');
+
+  const allS = scored;
+  new Chart(document.getElementById('c5'),{type:'bar',
+    data:{labels:allS.map(h=>h.t),datasets:[{label:'% Change (Jan→May)',data:allS.map(h=>h.pc.toFixed(1)),
+      backgroundColor:allS.map(h=>h.pc>=0?'rgba(74,222,128,0.8)':'rgba(248,113,113,0.8)'),borderRadius:3}]},
+    options:{indexAxis:'y',...CD,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>(c.parsed.x>=0?'+':'')+c.parsed.x+'%'}}},
+      scales:{x:{...CD.scales.x,ticks:{color:'#94a3b8',callback:v=>v+'%'}},y:{...CD.scales.y,ticks:{color:'#94a3b8',font:{size:10}}}}}});
+}
+
+// =====================================================================
+// TOP POSITIONS
+// =====================================================================
+function buildTopHeld(){
+  const sorted = [...H].filter(h=>mayVal(h)>0).sort((a,b)=>mayVal(b)-mayVal(a));
+  const top15 = sorted.slice(0,15);
+
+  const totalPortfolio = 166817.03;
+
+  new Chart(document.getElementById('c6'),{type:'bar',
+    data:{labels:top15.map(h=>h.t),datasets:[{label:'May Value',
+      data:top15.map(h=>mayVal(h).toFixed(2)),
+      backgroundColor:'rgba(56,189,248,0.75)',borderColor:'#38bdf8',borderWidth:1,borderRadius:4}]},
+    options:{indexAxis:'y',...CD,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>'$'+parseFloat(c.parsed.x).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}}},
+      scales:{x:{...CD.scales.x,ticks:{color:'#94a3b8',callback:v=>'$'+v/1000+'K'}},y:{...CD.scales.y,ticks:{color:'#94a3b8',font:{size:10}}}}}});
+
+  const topU = [...H].filter(h=>h.unreal>0).sort((a,b)=>b.unreal-a.unreal).slice(0,15);
+  new Chart(document.getElementById('c7'),{type:'bar',
+    data:{labels:topU.map(h=>h.t),datasets:[{label:'Unrealized Gain',
+      data:topU.map(h=>h.unreal.toFixed(2)),
+      backgroundColor:'rgba(74,222,128,0.75)',borderColor:'#16a34a',borderWidth:1,borderRadius:4}]},
+    options:{indexAxis:'y',...CD,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>'$'+parseFloat(c.parsed.x).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}}},
+      scales:{x:{...CD.scales.x,ticks:{color:'#94a3b8',callback:v=>'$'+v/1000+'K'}},y:{...CD.scales.y,ticks:{color:'#94a3b8',font:{size:10}}}}}});
+
+  const tbody = document.getElementById('toptbody');
+  sorted.slice(0,20).forEach(h=>{
+    const mv = mayVal(h);
+    const jv = h.janPx ? h.janPx * h.janSh : null;
+    const rc = retCost(h);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong style="color:#38bdf8">${h.t}</strong></td>
+      <td style="color:var(--muted)">${h.n}</td>
+      <td><strong>${fmt(mv)}</strong></td>
+      <td><span class="badge bb2">${(mv/totalPortfolio*100).toFixed(1)}%</span></td>
+      <td>${jv ? fmt(jv) : '<span style="color:var(--muted)">New</span>'}</td>
+      <td><span style="color:${h.unreal>=0?'#4ade80':'#f87171'};font-weight:600">${h.unreal>=0?'+':''}${fmt(h.unreal)}</span></td>
+      <td>${rc!==null?`<span class="badge ${rc>=0?'bg':'br'}">${fmtPct(rc)}</span>`:'—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// =====================================================================
+// INCOME
+// =====================================================================
+function buildIncome(){
+  new Chart(document.getElementById('c8'),{type:'bar',
+    data:{labels:incMonths,datasets:[{label:'Income ($)',data:incAmts,
+      backgroundColor:'rgba(74,222,128,0.7)',borderColor:'#16a34a',borderWidth:1.5,borderRadius:5}]},
+    options:{...CD,plugins:{...CD.plugins,legend:{display:false},
+      tooltip:{callbacks:{label:c=>fmt(c.parsed.y)}}},
+      scales:{x:CD.scales.x,y:{...CD.scales.y,ticks:{color:'#94a3b8',callback:v=>'$'+v}}}}});
+
+  new Chart(document.getElementById('c9'),{type:'doughnut',
+    data:{labels:['Dividends ($867.59)','Interest / CDs ($65.14)'],
+      datasets:[{data:[867.59,65.14],backgroundColor:['#3b82f6','#f59e0b'],borderColor:'#1e293b',borderWidth:2}]},
+    options:{plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',padding:12}}},cutout:'55%'}});
+
+  document.getElementById('incDetail').innerHTML = [
+    {m:'January 2026', div:33.95, int:13.37, note:'OXY, RCL, M, CRM dividends; UBS CD interest; Vanguard Money Market dividend'},
+    {m:'February 2026',div:112.80,int:16.30, note:'DVAX merger proceeds; quarterly ETF distributions; CD interest'},
+    {m:'March 2026',   div:195.70,int:53.00, note:'RYLD first distribution; VDE, VIG, VOX, ESGV quarterly; CD interest'},
+    {m:'April 2026',   div:178.90,int:35.88, note:'RYLD covered call income; FOLD merger; CD interest; quarterly dividends'},
+    {m:'May 2026',     div:245.76,int:13.16, note:'AT&T, ASGI (first), RYLD, SBUX, CCL, COST, AAPL, CFG, SCHW dividends; CD interest'},
+  ].map(r=>`<div class="dr"><div><div class="tk">${r.m}</div><div style="font-size:0.74rem;color:var(--muted);margin-top:2px">${r.note}</div></div>
+    <div style="text-align:right"><div class="am">${fmt(r.div+r.int)}</div>
+    <div style="font-size:0.74rem;color:var(--muted)">Div ${fmt(r.div)} | Int ${fmt(r.int)}</div></div></div>`).join('')
+    + `<div class="dr" style="border-top:1px solid var(--accent);margin-top:8px;padding-top:10px">
+        <div class="tk" style="font-size:1rem;color:#fff">YTD Total</div>
+        <div class="am" style="font-size:1rem">${fmt(932.73)}</div></div>`;
+}
+
+// =====================================================================
+// EVENTS
+// =====================================================================
+function buildEvents(){
+  document.getElementById('tlEl').innerHTML = [
+    {m:'Jan',t:'buy', title:'Portfolio opens 2026',    desc:'Value $152,535 · 47+ holdings across stocks, ETFs & CDs'},
+    {m:'Feb',t:'sell',title:'DVAX Merger Completed',   desc:'Dynavax Technologies · Received $15.50/share cash · Position closed'},
+    {m:'Feb',t:'ev',  title:'Minor pullback',           desc:'-$971.59 (-0.64%) · Market softness offset gains'},
+    {m:'Mar',t:'buy', title:'RYLD Purchased',           desc:'Global X Russell 2000 Covered Call ETF · 350 sh @ $14.84 = $5,192.25'},
+    {m:'Mar',t:'ev',  title:'Sharpest decline',         desc:'-$5,756 (-3.80%) · Worst single month of the period'},
+    {m:'Mar',t:'ev',  title:'Withdrawal',               desc:'$1,000 sent to Capital One Bank'},
+    {m:'Apr',t:'sell',title:'FOLD Merger Completed',    desc:'Amicus Therapeutics · $362.50 cash received · Position closed'},
+    {m:'Apr',t:'ev',  title:'UP Reverse Split',         desc:'Wheels Up Experience 1:35 reverse split · Position effectively eliminated'},
+    {m:'Apr',t:'ev',  title:'Best month of period',     desc:'+$15,258 (+10.46%) · Strong broad market recovery'},
+    {m:'Apr',t:'buy', title:'Capital received',         desc:'$1,200 deposited from Capital One Bank'},
+    {m:'May',t:'buy', title:'ASGI Purchased',           desc:'Abrdn Global Infrastructure Income Fund · 70 sh @ $24.03 = $1,682.10'},
+    {m:'May',t:'ev',  title:'CCL CUSIP change',         desc:'Carnival Corp · Identifier update only · No financial impact'},
+    {m:'May',t:'ev',  title:'New portfolio high',       desc:'$166,817 · YTD gain +$18,347 (+12.36%) from Dec 2025'},
+  ].map(e=>`<div class="tli ${e.t}"><div class="tlm">${e.m}</div>
+    <div><div class="tlt">${e.title}</div><div class="tld">${e.desc}</div></div></div>`).join('');
+
+  document.getElementById('cfEl').innerHTML = [
+    {m:'Mar 2026',t:'out',d:'Withdrawal to Capital One Bank',      a:-1000.00},
+    {m:'Apr 2026',t:'in', d:'Deposit from Capital One Bank',       a:1200.00},
+    {m:'Feb 2026',t:'in', d:'DVAX merger cash proceeds',           a:15.48},
+    {m:'Apr 2026',t:'in', d:'FOLD/Amicus merger cash proceeds',    a:362.50},
+    {m:'May 2026',t:'out',d:'ASGI mutual fund purchase',           a:-1682.10},
+  ].map(c=>`<div class="dr"><div><div class="tk">${c.m}</div>
+    <div style="font-size:0.74rem;color:var(--muted)">${c.d}</div></div>
+    <div class="am" style="color:${c.a>=0?'#4ade80':'#f87171'}">${c.a>=0?'+':''}${fmt(c.a)}</div></div>`).join('');
+
+  document.getElementById('caEl').innerHTML = [
+    {d:'Feb 2026',a:'DVAX → Merger', info:'Dynavax acquired · $15.50/share · Removed from portfolio'},
+    {d:'Apr 2026',a:'FOLD → Merger', info:'Amicus Therapeutics acquired · Cash received · Removed'},
+    {d:'Apr 2026',a:'UP Reverse Split', info:'Wheels Up 1:35 split · Position too small · Effectively removed'},
+    {d:'May 2026',a:'CCL CUSIP Change', info:'New identifier: Carnival Corp → no impact on position size or value'},
+  ].map(c=>`<div class="dr"><div><div class="tk">${c.d} — ${c.a}</div>
+    <div style="font-size:0.74rem;color:var(--muted)">${c.info}</div></div></div>`).join('');
+
+  document.getElementById('paEl').innerHTML = [
+    {m:'Already held', t:'hold', items:'AAPL, AMZN, COST, GOOG, GOOGL, SBUX, SIEGY, T, MSFT, GS, and 37 more'},
+    {m:'Mar 2026',     t:'buy',  items:'RYLD — Global X Russell 2000 Covered Call ETF'},
+    {m:'May 2026',     t:'buy',  items:'ASGI — Abrdn Global Infrastructure Income Fund'},
+    {m:'Feb 2026',     t:'sell', items:'DVAX — Dynavax Technologies (merger)'},
+    {m:'Apr 2026',     t:'sell', items:'FOLD — Amicus Therapeutics (merger)'},
+    {m:'Apr 2026',     t:'sell', items:'UP — Wheels Up Experience (reverse split / removed)'},
+  ].map(e=>`<div class="dr"><div>
+    <div class="tk"><span class="badge ${e.t==='buy'?'bg':e.t==='sell'?'br':'bgy'}" style="margin-right:6px">${e.t==='hold'?'Existing':e.t==='buy'?'Added':'Removed'}</span>${e.m}</div>
+    <div style="font-size:0.76rem;color:var(--muted);margin-top:3px">${e.items}</div></div></div>`).join('');
+}
+
+// =====================================================================
+// PAGE NAV
+// =====================================================================
+const builtPages = {};
+function showPage(id, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(!builtPages[id]){
+    builtPages[id]=true;
+    if(id==='holdings')    buildHoldingsTable('All');
+    if(id==='performance') buildPerformance();
+    if(id==='topheld')     buildTopHeld();
+    if(id==='income')      buildIncome();
+    if(id==='events')      buildEvents();
+  }
+}
+</script>
+</body>
+</html>
